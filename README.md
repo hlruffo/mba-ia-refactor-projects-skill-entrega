@@ -497,12 +497,22 @@ A execução e os resultados de validação dos três projetos estão registrado
 
 ## Resultados
 
+### Resumo dos relatórios de auditoria
+
+| Projeto | CRITICAL | HIGH | MEDIUM | LOW | Total |
+|---|---:|---:|---:|---:|---:|
+| `code-smells-project` | 5 | 3 | 0 | 0 | 8 |
+| `ecommerce-api-legacy` | 4 | 2 | 3 | 1 | 10 |
+| `task-manager-api` | 4 | 3 | 5 | 0 | 12 |
+
+Os relatórios preservam os achados originais da Fase 2, com arquivo e linha, evidência sanitizada, impacto e recomendação.
+
 ### Projeto 1 — code-smells-project
 
 - Stack detectada: Python/Flask.
 - Estrutura anterior: `app.py`, `controllers.py`, `models.py` e `database.py` monolíticos.
 - Estrutura posterior: factory Flask, rotas, services, repositórios SQLite e tratamento centralizado de erros em `loja/`.
-- Validação: `7 passed`; `compileall` aprovado; endpoints públicos exercitados com Flask test client.
+- Validação: `7 passed`; `compileall` aprovado; endpoints públicos exercitados com Flask test client e `GET /health` via servidor em `127.0.0.1:5003` retornou `200`.
 - Segurança: SQL parametrizado, hashing seguro, respostas sem senha/segredo e endpoints administrativos protegidos/desabilitados por padrão.
 
 ### Projeto 2 — ecommerce-api-legacy
@@ -521,6 +531,34 @@ A execução e os resultados de validação dos três projetos estão registrado
 - Validação: `5 passed`; compilação Python aprovada; seed temporário criou 3 usuários, 4 categorias e 10 tasks; boot e endpoints de health, tasks, users, login, reports e categories verificados.
 - Segurança: `password` removido das respostas, MD5 substituído por hashing do Werkzeug e segredo extraído para ambiente.
 
+### Checklist de validação
+
+| Critério | Projeto 1 | Projeto 2 | Projeto 3 |
+|---|---|---|---|
+| Stack detectada corretamente | ✅ | ✅ | ✅ |
+| Domínio e arquitetura descritos | ✅ | ✅ | ✅ |
+| Relatório com findings e linhas | ✅ | ✅ | ✅ |
+| Mínimo de 5 findings | ✅ (8) | ✅ (10) | ✅ (12) |
+| CRITICAL/HIGH identificado | ✅ | ✅ | ✅ |
+| Skill copiada e reutilizada | ✅ | ✅ | ✅ |
+| Estrutura MVC/camadas aplicada | ✅ | ✅ | ✅ |
+| Configuração sem segredo hardcoded | ✅ | ✅ | ✅ |
+| Error handling/validação | ✅ | ✅ | ✅ |
+| Boot validado | ✅ | ✅ | ✅ |
+| Endpoints originais validados | ✅ | ✅ | ✅ |
+
+### Logs de validação
+
+```text
+code-smells-project: 7 passed; GET /health -> 200
+ecommerce-api-legacy: npm test -> 1 pass, 0 fail; boot + endpoints -> pass
+task-manager-api: 5 passed; seed -> 3 usuários, 4 categorias, 10 tasks; boot + endpoints -> pass
+compileall Python: pass
+node --check: pass
+git diff --check: pass
+scan de literais de segredo adicionados: pass
+```
+
 ### Validação global
 
 ```text
@@ -531,4 +569,4 @@ git diff --check: aprovado
 scan de literais de segredo: aprovado
 ```
 
-Riscos remanescentes e decisões de compatibilidade estão documentados nos três relatórios. Não foram feitos commit, push ou alteração no repositório remoto nesta etapa.
+Riscos remanescentes e decisões de compatibilidade estão documentados nos três relatórios. O repositório público foi publicado e verificado no commit de entrega.
