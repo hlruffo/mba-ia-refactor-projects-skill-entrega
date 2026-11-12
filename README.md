@@ -446,3 +446,89 @@ A skill deve atingir os seguintes mínimos em **todos os 3 projetos**:
 - **Projetos diferentes exigem adaptação** — a Fase 3 de um projeto já parcialmente organizado não vai ter as mesmas transformações de um monolito. Sua skill deve se adaptar ao contexto.
 - **Pedir confirmação na Fase 2 é obrigatório** — o humano deve revisar o relatório antes de qualquer modificação.
 - **Consulte as referências do curso** — revise a documentação oficial da ferramenta escolhida e os materiais das aulas para relembrar a estrutura e anatomia de uma skill.
+
+## Análise Manual
+
+### code-smells-project — Python/Flask, API de e-commerce
+
+- **CRITICAL — `app.py:7`**: `SECRET_KEY` está hardcoded e também é exposta no endpoint `/health` (`controllers.py:289`). Isso permite comprometimento de sessões e vazamento de segredo.
+- **CRITICAL — `app.py:59-78`**: `/admin/query` executa SQL recebido do cliente sem autenticação ou allow-list. É uma superfície de execução arbitrária e deve ser removida ou restringida.
+- **MEDIUM — `models.py:187-199` e `219-231`**: listagens de pedidos fazem consultas adicionais por pedido e por item, caracterizando N+1 e múltiplos cursores correlatos.
+- **MEDIUM — `controllers.py:24-55` e `64-96`**: validações de produto são duplicadas entre criação e atualização, aumentando o risco de contratos inconsistentes.
+- **LOW — `controllers.py:242`**: status de pedido é uma lista literal dentro da rota, em vez de constante compartilhada.
+- **LOW — `models.py:256-262`**: faixas de desconto usam números mágicos sem nome ou configuração explícita.
+
+### ecommerce-api-legacy — Node.js/Express, LMS com checkout
+
+- **CRITICAL — `src/utils.js:2-5`**: credenciais de banco, gateway e SMTP estão hardcoded no código-fonte.
+- **HIGH — `src/AppManager.js:4-141`**: uma única classe inicializa banco, define rotas, executa consultas, calcula checkout e serializa respostas, violando separação de responsabilidades.
+- **MEDIUM — `src/AppManager.js:80-127`**: o relatório financeiro executa consultas aninhadas por curso e matrícula, criando padrão N+1 e fluxo assíncrono difícil de testar.
+- **MEDIUM — `src/AppManager.js:43-63`**: checkout mistura pagamento, matrícula, auditoria e cache em callback aninhado, sem serviço transacional isolado.
+- **LOW — `src/AppManager.js:29-33`**: nomes abreviados (`usr`, `eml`, `pwd`, `cid`, `cc`) reduzem legibilidade e tornam o contrato da API pouco explícito.
+- **LOW — `src/utils.js:9-10`**: `globalCache` e `totalRevenue` são estado global mutável e não utilizado de modo consistente.
+
+### task-manager-api — Python/Flask, API de gerenciamento de tarefas
+
+- **CRITICAL — `app.py:13`**: `SECRET_KEY` está hardcoded.
+- **CRITICAL — `models/user.py:21`**: `to_dict()` devolve `password`, expondo dado sensível nas respostas de usuários e login.
+- **MEDIUM — `routes/task_routes.py:41-57`**: cada tarefa gera consultas adicionais para usuário e categoria, caracterizando N+1.
+- **MEDIUM — `routes/report_routes.py:53-68`**: o relatório consulta tarefas separadamente para cada usuário e calcula produtividade em Python, gerando consultas repetidas.
+- **LOW — `routes/task_routes.py:38-39`**: a regra de atraso retorna `False` em vários ramos e está duplicada em múltiplas rotas, dificultando manutenção.
+- **LOW — `utils/helpers.py:1-7`**: há imports não utilizados (`os`, `json`, `sys`, `math`, `hashlib`), sinalizando dívida de limpeza e baixa coesão.
+
+## Construção da Skill
+
+A skill está em `.claude/skills/refactor-arch/` dentro dos três projetos, com o mesmo conteúdo para preservar a portabilidade. O `SKILL.md` impõe três fases: análise sem escrita, auditoria sem escrita com gate humano obrigatório e refatoração com validação. As referências foram separadas por responsabilidade: heurísticas de stack, catálogo de 14 anti-patterns, template de relatório, guidelines MVC e playbook com 10 transformações antes/depois.
+
+A skill é agnóstica porque as heurísticas distinguem Python/Flask e Node.js/Express por arquivos, imports, scripts e runtime, mas usam o mesmo modelo de camadas, severidades, evidências e validação. A detecção de APIs deprecated exige confirmação na documentação da versão, evitando classificar código apenas por preferência de estilo.
+
+## Como Executar
+
+```bash
+# Em qualquer projeto
+cd <projeto>
+claude
+# invoque /refactor-arch quando a skill estiver disponível
+```
+
+A Fase 2 deve gerar o relatório em `reports/` e aguardar `Proceed with refactoring (Phase 3)? [y/n]`. Somente após uma resposta afirmativa a Fase 3 pode editar arquivos. Antes e depois, valide sintaxe/imports, boot, health/root e os endpoints originais com dados de teste não sensíveis.
+
+A execução e os resultados de validação dos três projetos estão registrados em `reports/audit-project-{1,2,3}.md`.
+
+## Resultados
+
+### Projeto 1 — code-smells-project
+
+- Stack detectada: Python/Flask.
+- Estrutura anterior: `app.py`, `controllers.py`, `models.py` e `database.py` monolíticos.
+- Estrutura posterior: factory Flask, rotas, services, repositórios SQLite e tratamento centralizado de erros em `loja/`.
+- Validação: `7 passed`; `compileall` aprovado; endpoints públicos exercitados com Flask test client.
+- Segurança: SQL parametrizado, hashing seguro, respostas sem senha/segredo e endpoints administrativos protegidos/desabilitados por padrão.
+
+### Projeto 2 — ecommerce-api-legacy
+
+- Stack detectada: Node.js/Express + SQLite.
+- Estrutura anterior: `AppManager.js` concentrava boot, rotas, SQL e regras de checkout.
+- Estrutura posterior: configuração, rotas, controllers, services, repositories e middleware de autenticação administrativa.
+- Validação: `npm test` — 1 teste de integração aprovado; sintaxe JavaScript aprovada; boot e endpoints principais verificados.
+- Segurança: configuração externa, `crypto.scrypt` com salt, transação no checkout e logs sem cartão/chaves.
+
+### Projeto 3 — task-manager-api
+
+- Stack detectada: Python/Flask + Flask-SQLAlchemy.
+- Estrutura anterior: rotas extensas com validação, serialização, consultas e regras misturadas.
+- Estrutura posterior: controllers, repositories, configuração, validação e tratamento de erros centralizados.
+- Validação: `5 passed`; compilação Python aprovada; seed temporário criou 3 usuários, 4 categorias e 10 tasks; boot e endpoints de health, tasks, users, login, reports e categories verificados.
+- Segurança: `password` removido das respostas, MD5 substituído por hashing do Werkzeug e segredo extraído para ambiente.
+
+### Validação global
+
+```text
+code-smells-project: 7 passed
+ecommerce-api-legacy: 1 passed
+task-manager-api: 5 passed
+git diff --check: aprovado
+scan de literais de segredo: aprovado
+```
+
+Riscos remanescentes e decisões de compatibilidade estão documentados nos três relatórios. Não foram feitos commit, push ou alteração no repositório remoto nesta etapa.

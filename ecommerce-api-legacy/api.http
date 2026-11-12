@@ -1,4 +1,8 @@
 @baseUrl = http://localhost:3000
+@adminToken = {{$dotenv ADMIN_API_TOKEN}}
+
+### Health check
+GET {{baseUrl}}/health
 
 ### Checkout - sucesso
 POST {{baseUrl}}/api/checkout
@@ -26,6 +30,7 @@ Content-Type: application/json
 
 ### Relatório financeiro administrativo
 GET {{baseUrl}}/api/admin/financial-report
+Authorization: Bearer {{adminToken}}
 
 ### Deletar usuário
 DELETE {{baseUrl}}/api/users/1
