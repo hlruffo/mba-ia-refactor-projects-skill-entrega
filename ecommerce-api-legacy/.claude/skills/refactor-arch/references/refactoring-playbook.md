@@ -51,3 +51,8 @@ Depois: schema/validator e constantes compartilhadas, com mensagens compatíveis
 
 Antes: `except:` amplo ou API documentada como obsoleta.
 Depois: exceções específicas, handler centralizado e equivalente moderno confirmado pela documentação da versão.
+
+## PB-11 — Token de autenticação real
+
+Antes: `return {"token": "fake-jwt-token-" + str(user.id)}`.
+Depois: emita um JWT assinado com algoritmo explícito e chave carregada de configuração/ambiente, contendo somente claims mínimas (`sub`, `iat`, `exp` e, quando necessário, `role`). Defina expiração curta e valide o token com a mesma chave/algoritmo nos recursos protegidos; nunca use ID, email ou timestamp como segredo. Atualize dependências, `.env.example`, testes de login/decodificação, documentação e o relatório. Se a auditoria encontrar um placeholder previsível, esta transformação é obrigatória na Fase 3 e não deve ser adiada por compatibilidade de contrato.

@@ -1,3 +1,5 @@
+import jwt
+
 from models.user import User
 from database import db
 
@@ -35,7 +37,14 @@ def test_user_endpoints_and_password_safety(client, app):
     user_id = created.json['id']
     assert client.get(f'/users/{user_id}').status_code == 200
     assert client.get(f'/users/{user_id}/tasks').status_code == 200
-    assert client.post('/login', json={'email': 'new@example.com', 'password': 'safe-test-password'}).status_code == 200
+    login = client.post('/login', json={'email': 'new@example.com', 'password': 'safe-test-password'})
+    assert login.status_code == 200
+    token = login.json['token']
+    assert not token.startswith('fake-jwt-token-')
+    claims = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+    assert claims['sub'] == str(user_id)
+    assert claims['role'] == 'user'
+    assert claims['exp'] > claims['iat']
     assert client.post('/login', json={'email': 'new@example.com', 'password': 'bad'}).status_code == 401
     assert client.put(f'/users/{user_id}', json={'name': 'Updated'}).status_code == 200
     assert client.delete(f'/users/{user_id}').status_code == 200

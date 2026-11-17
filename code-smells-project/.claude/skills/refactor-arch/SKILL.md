@@ -42,11 +42,12 @@ Após confirmação:
 2. Aplique o playbook de forma incremental e mantenha o contrato das rotas.
 3. Separe Models (persistência e entidades), Controllers/Services (casos de uso), Views/Routes (HTTP), configuração e tratamento de erros.
 4. Remova segredos hardcoded, dados sensíveis das respostas e logs de cartão/senha.
-5. Use queries parametrizadas e KDF seguro para senhas quando aplicável.
-6. Centralize configuração em ambiente/config e mantenha `.env.example` sem segredos.
-7. Valide sintaxe, importação, boot da aplicação, health check e endpoints originais com dados de teste não sensíveis.
-8. Atualize o relatório com a estrutura antes/depois, alterações e evidências reais de validação.
-9. Não declare sucesso se um endpoint não foi exercitado ou se o boot falhar.
+5. Se a Fase 2 identificar token fake, placeholder previsível ou token montado com ID/login (por exemplo, TMA-005), substitua-o obrigatoriamente nesta fase por um token assinado por mecanismo real, com algoritmo explícito, claims mínimas, expiração e chave carregada da configuração/ambiente. Não preserve o placeholder por compatibilidade; atualize testes, documentação e o relatório para registrar a correção.
+6. Use queries parametrizadas e KDF seguro para senhas quando aplicável.
+7. Centralize configuração em ambiente/config e mantenha `.env.example` sem segredos.
+8. Valide sintaxe, importação, boot da aplicação, health check e endpoints originais com dados de teste não sensíveis.
+9. Atualize o relatório com a estrutura antes/depois, alterações e evidências reais de validação.
+10. Não declare sucesso se um endpoint não foi exercitado ou se o boot falhar.
 
 ## Saída obrigatória
 

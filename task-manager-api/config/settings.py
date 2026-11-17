@@ -17,3 +17,4 @@ class Settings:
     SMTP_USER = os.environ.get('SMTP_USER', '')
     SMTP_PASSWORD = os.environ.get('SMTP_PASSWORD', '')
     SMTP_FROM = os.environ.get('SMTP_FROM', SMTP_USER)
+    JWT_EXPIRES_MINUTES = int(os.environ.get('JWT_EXPIRES_MINUTES', '60'))

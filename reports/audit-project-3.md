@@ -53,7 +53,7 @@
 - Evidence: the login response assembled a token from a fixed `fake-jwt-token-` prefix and the numeric user ID.
 - Description: the value looked like an authentication token but was predictable and was not cryptographically signed.
 - Impact: clients could mistake a placeholder for a credential suitable for authorization.
-- Recommendation: integrate a real token mechanism before using this value to protect resources. The placeholder response remains for compatibility in this refactor.
+- Recommendation: apply PB-11 from the refactoring playbook: issue a real signed JWT with an explicit algorithm, minimal claims, configurable secret and expiration; update tests and documentation rather than preserving the placeholder for compatibility.
 - Deprecated API: não aplicável.
 
 ### [HIGH] TMA-006 — Route handlers mixed HTTP, persistence and business logic
@@ -123,7 +123,7 @@ Human confirmation: affirmative confirmation was included in the user's Phase 3 
 - Before structure: `app.py`, `models/`, `routes/`, `services/`, `utils/`; SQL-heavy and rule-heavy route handlers.
 - After structure: `config/`, `controllers/`, `repositories/`, `models/`, thin `routes/`, shared `validation.py`, `errors.py`, `utils/`, `services/`.
 - Configuration: environment-backed `SECRET_KEY`, `DATABASE_URL`, SMTP settings, host and port; `.env.example` contains placeholders only. The application generates a process-local random key if `SECRET_KEY` is omitted.
-- Security: Werkzeug password hashing is used; `User.to_dict()` excludes password; SMTP credentials are environment-backed; the seed password is required through `SEED_DEFAULT_PASSWORD`.
+- Security: Werkzeug password hashing is used; `User.to_dict()` excludes password; SMTP credentials are environment-backed; the seed password is required through `SEED_DEFAULT_PASSWORD`; login now issues an HS256 JWT with `sub`, `email`, `role`, `iat` and `exp`, using `SECRET_KEY` and configurable `JWT_EXPIRES_MINUTES`.
 - Query behavior: task list eager-loads user/category, user listing and category listing use grouped queries, and report productivity is aggregated by user.
 - Contract: all original route paths and methods remain registered, including root, health, tasks/search/stats, users and login, report summary/user, and category CRUD.
 - Tests: `PYTHONPATH=/tmp/task-manager-test-deps /home/hlruffo/Desktop/desafio-skill-auditoria-refatoracao/.venv-task-manager/bin/python -m pytest -q` — PASS, 5 passed. Pytest was installed into `/tmp` for this run; `requirements-dev.txt` now declares it for normal project setup.
@@ -131,5 +131,5 @@ Human confirmation: affirmative confirmation was included in the user's Phase 3 
 - Seed: ran `seed.py` against a temporary SQLite database with environment values supplied; PASS, 3 users, 4 categories and 10 tasks.
 - Boot: ran `app.py` as a separate process on `127.0.0.1:5127` with the temporary SQLite database — PASS; process was stopped with Ctrl-C after checks.
 - HTTP checks: root, health, task list/search/stats/detail/create/update/delete, user list/detail/tasks, login, report summary/user and category list/create/update/delete — PASS (200/201 as expected).
-- Remaining risks: existing database rows containing MD5 hashes cannot be upgraded without the users' plaintext passwords; reset those passwords. The legacy fake login token remains to preserve the response contract and must not be treated as a secure bearer token. `db.create_all()` remains in the factory for compatibility; production schema evolution should use migrations.
+- Remaining risks: existing database rows containing MD5 hashes cannot be upgraded without the users' plaintext passwords; reset those passwords. The JWT signing key is process/configuration-managed and should be set to a unique deployment secret rather than relying on the development fallback. `db.create_all()` remains in the factory for compatibility; production schema evolution should use migrations.
 - Deprecated API search: `datetime.utcnow()` was found and replaced as described above; no other deprecated API was identified in the analyzed Python sources.

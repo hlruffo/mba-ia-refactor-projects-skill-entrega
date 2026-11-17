@@ -529,7 +529,7 @@ Os relatórios preservam os achados originais da Fase 2, com arquivo e linha, ev
 - Estrutura anterior: rotas extensas com validação, serialização, consultas e regras misturadas.
 - Estrutura posterior: controllers, repositories, configuração, validação e tratamento de erros centralizados.
 - Validação: `5 passed`; compilação Python aprovada; seed temporário criou 3 usuários, 4 categorias e 10 tasks; boot e endpoints de health, tasks, users, login, reports e categories verificados.
-- Segurança: `password` removido das respostas, MD5 substituído por hashing do Werkzeug e segredo extraído para ambiente.
+- Segurança: `password` removido das respostas, MD5 substituído por hashing do Werkzeug, segredo extraído para ambiente e login emitindo JWT HS256 com claims mínimas e expiração configurável (`JWT_EXPIRES_MINUTES`).
 
 ### Checklist de validação
 
@@ -552,7 +552,7 @@ Os relatórios preservam os achados originais da Fase 2, com arquivo e linha, ev
 ```text
 code-smells-project: 7 passed; GET /health -> 200
 ecommerce-api-legacy: npm test -> 1 pass, 0 fail; boot + endpoints -> pass
-task-manager-api: 5 passed; seed -> 3 usuários, 4 categorias, 10 tasks; boot + endpoints -> pass
+task-manager-api: 5 passed; JWT assinado validado com HS256, claims e expiração; seed -> 3 usuários, 4 categorias e 10 tasks; boot + endpoints -> pass
 compileall Python: pass
 node --check: pass
 git diff --check: pass

@@ -16,5 +16,6 @@
 | AP-012 | Nomenclatura e código morto | LOW | imports não usados, nomes genéricos, funções sem uso |
 | AP-013 | API deprecated | MEDIUM | método/runtime explicitamente obsoleto na documentação da versão |
 | AP-014 | Responsabilidade de configuração no entry point | HIGH | segredos, defaults e infraestrutura misturados ao boot |
+| AP-015 | Token de autenticação fake/previsível | HIGH | prefixo fixo, ID/email/timestamp no token ou valor sem assinatura/expiração |
 
 A severidade pode ser elevada ou reduzida somente com justificativa baseada no impacto e no contexto. Findings devem ser ordenados por severidade. Para cada API deprecated, registre a fonte/versionamento e o equivalente moderno; não faça substituição especulativa.

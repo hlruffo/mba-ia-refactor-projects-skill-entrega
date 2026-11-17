@@ -1,3 +1,8 @@
+from datetime import datetime, timedelta, timezone
+
+import jwt
+from flask import current_app
+
 from database import db
 from errors import APIError
 from models.user import User
@@ -115,4 +120,17 @@ class UserController:
             raise APIError('Credenciais inválidas', 401)
         if not user.active:
             raise APIError('Usuário inativo', 403)
-        return {'message': 'Login realizado com sucesso', 'user': user.to_dict(), 'token': 'fake-jwt-token-' + str(user.id)}
+        now = datetime.now(timezone.utc)
+        expires_minutes = current_app.config.get('JWT_EXPIRES_MINUTES', 60)
+        token = jwt.encode(
+            {
+                'sub': str(user.id),
+                'email': user.email,
+                'role': user.role,
+                'iat': now,
+                'exp': now + timedelta(minutes=expires_minutes),
+            },
+            current_app.config['SECRET_KEY'],
+            algorithm='HS256',
+        )
+        return {'message': 'Login realizado com sucesso', 'user': user.to_dict(), 'token': token}
